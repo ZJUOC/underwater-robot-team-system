@@ -408,6 +408,15 @@ kbd { border: 1px solid var(--line-strong); background: #fff; border-radius: 4px
 .uncertainty-list { display: grid; gap: 7px; }
 .uncertainty-list p { margin: 0; padding: 9px 10px; display: flex; gap: 8px; color: #785025; background: #fff8ed; border-radius: 7px; line-height: 1.5; font-size: 12px; }
 .question-suggestions { margin: 0; padding-left: 22px; color: #4f696d; line-height: 1.7; font-size: 12px; }
+.ocr-capability { padding: 9px 10px; display: flex; align-items: flex-start; gap: 8px; color: #3f6668; background: #edf7f5; border-radius: 7px; font-size: 11px; line-height: 1.5; }
+.ocr-capability svg { flex: 0 0 auto; margin-top: 1px; color: var(--accent); }
+.extraction-report { display: grid; gap: 8px; }
+.extraction-report article { padding: 10px 11px; border: 1px solid var(--line); border-radius: 7px; background: #fbfdfd; }
+.extraction-report-title { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; align-items: center; gap: 7px; color: var(--accent); }
+.extraction-report-title strong { overflow: hidden; color: var(--ink); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.extraction-metrics { margin: 8px 0 0 25px; display: flex; flex-wrap: wrap; gap: 5px; }
+.extraction-metrics span { padding: 3px 6px; color: #526d70; background: #edf3f3; border-radius: 4px; font-size: 9px; }
+.extraction-report article > p { margin: 8px 0 0 25px; display: flex; gap: 5px; color: #81592f; font-size: 10px; line-height: 1.45; }
 
 .applicant-header { padding: 21px 22px; display: flex; align-items: center; justify-content: space-between; gap: 24px; color: #fff; background: var(--sidebar); border-radius: var(--radius); margin-bottom: 14px; }
 .applicant-identity { display: flex; align-items: center; gap: 14px; }
@@ -441,6 +450,9 @@ kbd { border: 1px solid var(--line-strong); background: #fff; border-radius: 4px
 .material-analysis-list article > p { margin: 12px 0; color: #4f6d70; line-height: 1.6; }
 .analysis-facts-inline { display: flex; flex-wrap: wrap; gap: 6px; }
 .analysis-facts-inline span { padding: 4px 7px; display: inline-flex; align-items: center; gap: 5px; color: var(--accent-dark); background: var(--accent-soft); border-radius: 5px; font-size: 10px; }
+.material-reading-inline { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 5px; }
+.material-reading-inline span { padding: 4px 7px; color: #4b696b; background: #eef4f4; border-radius: 5px; font-size: 9px; }
+.material-reading-inline span.failed { color: #855528; background: #fff4e6; }
 .compact-capabilities { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 .compact-capabilities > div { padding: 12px; display: grid; grid-template-columns: 1fr auto; border: 1px solid var(--line); border-radius: 7px; }
 .compact-capabilities > div > span { color: var(--accent); font: 700 20px ui-monospace, monospace; }

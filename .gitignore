@@ -10,6 +10,7 @@ __pycache__/
 .tmp/
 dist/
 coverage/
+*.tsbuildinfo
 
 # Private recruitment data: contains names, phone numbers and source IPs.
 data/原始面试数据/

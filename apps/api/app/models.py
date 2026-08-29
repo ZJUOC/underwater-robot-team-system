@@ -91,6 +91,7 @@ class MaterialAnalysis(TimestampMixin, Base):
     status: Mapped[str] = mapped_column(String(32), default="review_required")
     summary: Mapped[str] = mapped_column(Text, default="")
     extracted_facts: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
+    extraction_report: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
     uncertainties: Mapped[list[str]] = mapped_column(JSON, default=list)
     suggested_questions: Mapped[list[str]] = mapped_column(JSON, default=list)
 

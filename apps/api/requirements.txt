@@ -5,3 +5,8 @@ alembic>=1.14,<2
 pydantic-settings==2.10.1
 psycopg[binary]==3.2.9
 python-multipart==0.0.20
+rapidocr==3.9.2
+onnxruntime>=1.19.2,<2
+PyMuPDF==1.26.5
+Pillow>=10.4,<12
+xlrd==2.0.2

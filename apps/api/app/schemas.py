@@ -150,6 +150,7 @@ class MaterialAnalysisRead(BaseModel):
     status: str
     summary: str
     extracted_facts: list[dict]
+    extraction_report: list[dict]
     uncertainties: list[str]
     suggested_questions: list[str]
     created_at: datetime

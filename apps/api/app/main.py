@@ -9,12 +9,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
+from starlette.concurrency import run_in_threadpool
 
 from . import models, schemas
 from .auth import create_access_token, token_from_request, verify_password
 from .config import get_settings
 from .database import Base, SessionLocal, engine, get_db
-from .material_parser import extract_material_text
+from .material_parser import MAX_IMAGE_FRAMES, MAX_PDF_PAGES, extract_material_text
 from .personality_engine import analyze_personality_signals
 from .seed import seed_demo
 from .services import analyze_interview, counts_by_status, review_evidence
@@ -182,6 +183,17 @@ def list_material_analyses(db: Session = Depends(get_db)):
     return db.scalars(select(models.MaterialAnalysis).order_by(models.MaterialAnalysis.created_at.desc()).limit(30)).all()
 
 
+@app.get("/api/material-analyses/capabilities")
+def material_analysis_capabilities():
+    return {
+        "formats": ["xlsx", "xls", "csv", "pdf", "docx", "pptx", "txt", "md", "json", "png", "jpg", "jpeg", "webp", "bmp", "tif", "tiff"],
+        "ocr_engine": "RapidOCR / ONNX Runtime",
+        "pdf_strategy": "优先提取文本层，扫描页自动 OCR",
+        "limits": {"files": 10, "file_mb": 15, "package_mb": 40, "pdf_pages": MAX_PDF_PAGES, "image_frames": MAX_IMAGE_FRAMES},
+        "privacy": "上传文件仅在内存中解析，不保存原文件。",
+    }
+
+
 @app.post("/api/material-analyses", response_model=schemas.MaterialAnalysisRead, status_code=201)
 async def create_material_analysis(
     files: list[UploadFile] = File(...), notes: str = Form(""),
@@ -193,34 +205,47 @@ async def create_material_analysis(
         member = db.get(models.Member, member_id)
         if not member or member.is_deleted or member.lifecycle_stage != "applicant":
             raise HTTPException(status_code=404, detail="关联的纳新档案不存在")
-    allowed = {"xlsx", "xls", "csv", "pdf", "docx", "txt", "md", "json"}
+    allowed = {"xlsx", "xls", "csv", "pdf", "docx", "pptx", "txt", "md", "json", "png", "jpg", "jpeg", "webp", "bmp", "tif", "tiff"}
     materials: list[dict] = []
     total_size = 0
     for upload in files:
-        filename = upload.filename or "未命名资料"
+        filename = (upload.filename or "未命名资料").replace("\\", "/").rsplit("/", 1)[-1][:240]
         suffix = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
         if suffix not in allowed:
             raise HTTPException(status_code=415, detail=f"暂不支持 {filename} 的文件类型")
-        content = await upload.read()
-        total_size += len(content)
-        if len(content) > 10 * 1024 * 1024 or total_size > 30 * 1024 * 1024:
-            raise HTTPException(status_code=413, detail="资料包超过大小限制")
-        text_content, parser_status = extract_material_text(content, suffix)
+        chunks: list[bytes] = []
+        file_size = 0
+        while chunk := await upload.read(1024 * 1024):
+            file_size += len(chunk)
+            if file_size > 15 * 1024 * 1024 or total_size + file_size > 40 * 1024 * 1024:
+                raise HTTPException(status_code=413, detail="资料包超过大小限制")
+            chunks.append(chunk)
+        content = b"".join(chunks)
+        total_size += file_size
+        extraction = await run_in_threadpool(extract_material_text, content, suffix)
         materials.append({
-            "filename": filename, "suffix": suffix, "size": len(content),
-            "text": text_content, "parser_status": parser_status,
+            "filename": filename, "suffix": suffix, "size": file_size,
+            "text": extraction.text,
+            "extraction": extraction.report(filename, suffix, file_size),
         })
     output = get_ai_provider().analyze_materials(materials, notes)
     row = models.MaterialAnalysis(
         member_id=member_id, title=f"资料包分析 {datetime.utcnow().strftime('%m-%d %H:%M')}",
         file_names=[item["filename"] for item in materials], material_types=output.material_types,
         notes=notes, status="review_required", summary=output.summary,
-        extracted_facts=output.extracted_facts, uncertainties=output.uncertainties,
+        extracted_facts=output.extracted_facts,
+        extraction_report=[item["extraction"] for item in materials],
+        uncertainties=output.uncertainties,
         suggested_questions=output.suggested_questions,
     )
     db.add(row)
+    db.flush()
     db.add(models.AuditLog(actor="开发管理员", action="material.analyze", resource_type="material_analysis",
-                           resource_id="pending", detail={"files": row.file_names, "member_id": member_id}))
+                           resource_id=str(row.id), detail={
+                               "files": row.file_names, "member_id": member_id,
+                               "methods": [item["extraction"]["method"] for item in materials],
+                               "ocr_pages": sum(item["extraction"]["ocr_page_count"] for item in materials),
+                           }))
     db.commit()
     db.refresh(row)
     return row

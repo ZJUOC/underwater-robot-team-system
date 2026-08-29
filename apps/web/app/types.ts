@@ -70,9 +70,25 @@ export interface MaterialAnalysis {
   status: string;
   summary: string;
   extracted_facts: { label: string; value: string; source: string; confidence: number }[];
+  extraction_report: MaterialExtractionReport[];
   uncertainties: string[];
   suggested_questions: string[];
   created_at: string;
+}
+
+export interface MaterialExtractionReport {
+  filename: string;
+  suffix: string;
+  size: number;
+  status: "complete" | "ocr_complete" | "partial" | "failed";
+  status_label: string;
+  method: string;
+  method_label: string;
+  page_count: number;
+  ocr_page_count: number;
+  char_count: number;
+  confidence: number | null;
+  warnings: string[];
 }
 
 export interface ApplicationDetail extends ApplicationSummary {

@@ -137,17 +137,18 @@ export default function ApplicationsPage() {
       </form>
     </Dialog>}
 
-    {modal === "assistant" && <Dialog wide title="资料分析助手" description="一次上传多种资料。AI 会跨文件整理事实、冲突、缺口和建议问题。" close={() => setModal(null)}>
+    {modal === "assistant" && <Dialog wide title="资料分析助手" description="先读取文本层并对扫描件执行 OCR，再跨文件整理事实、冲突、缺口和建议问题。" close={() => setModal(null)}>
       <form className="assistant-layout" onSubmit={analyzeMaterials}>
         <div className="assistant-inputs">
           <label className="upload-zone">
-            <input type="file" multiple accept=".xlsx,.xls,.csv,.pdf,.docx,.txt,.md,.json" onChange={(event) => setFiles(Array.from(event.target.files ?? []))} />
+            <input type="file" multiple accept=".xlsx,.xls,.csv,.pdf,.docx,.pptx,.txt,.md,.json,.png,.jpg,.jpeg,.webp,.bmp,.tif,.tiff" onChange={(event) => setFiles(Array.from(event.target.files ?? []))} />
             <UploadSimple size={26} /><strong>选择一个资料包</strong><span>问卷、表格、简历、文字记录和 PDF 可以混合上传</span>
           </label>
-          {files.length > 0 && <div className="selected-files">{files.map((file) => <div key={`${file.name}-${file.size}`}><FileIcon size={16} /><span>{file.name}</span><small>{formatBytes(file.size)}</small></div>)}</div>}
+          <div className="ocr-capability"><Sparkle size={15} weight="fill" /><span>扫描版 PDF、照片、截图和多页 TIFF 会自动 OCR；可直接读取 Word、PPT、Excel 与文本资料。</span></div>
+          {files.length > 0 && <div className="selected-files">{files.map((file) => <div key={`${file.name}-${file.size}`}><FileIcon size={16} /><span>{file.name}</span><small>{isOcrCandidate(file.name) ? "可 OCR / " : ""}{formatBytes(file.size)}</small></div>)}</div>}
           <label className="assistant-field"><span>关联到报名者（可选）</span><select name="member_id"><option value="">先只分析资料包</option>{rows.map((row) => <option value={row.member_id} key={row.member_id}>{row.name} / {row.student_id}</option>)}</select></label>
           <label className="assistant-field"><span>补充背景</span><textarea name="notes" placeholder="例如：这些资料可能来自同一位报名者，请重点判断技术基础和信息冲突。" /></label>
-          <button className="button primary assistant-submit" type="submit" disabled={saving || files.length === 0}><Brain size={18} />{saving ? "正在整理资料" : "开始 AI 分析"}</button>
+          <button className="button primary assistant-submit" type="submit" disabled={saving || files.length === 0}><Brain size={18} />{saving ? "正在读取并识别资料…" : "开始 AI 分析"}</button>
         </div>
         <div className="assistant-output" aria-live="polite">
           {!analysis ? <div className="assistant-empty"><Files size={34} /><strong>分析结果会出现在这里</strong><p>助手不会直接修改个人档案。所有抽取事实都需要人工确认后再使用。</p></div> : <AnalysisResult analysis={analysis} />}
@@ -160,6 +161,17 @@ export default function ApplicationsPage() {
 function AnalysisResult({ analysis }: { analysis: MaterialAnalysis }) {
   return <div className="analysis-sheet">
     <div className="analysis-sheet-heading"><span className="status-chip pending">待确认</span><small>{analysis.file_names.length} 份资料</small></div>
+    <h3>材料读取情况</h3>
+    <div className="extraction-report">{analysis.extraction_report.map((report) => <article key={`${report.filename}-${report.method}`}>
+      <div className="extraction-report-title"><FileIcon size={16} /><strong>{report.filename}</strong><span className={`status-chip ${report.status === "complete" || report.status === "ocr_complete" ? "active" : "pending"}`}>{report.status_label}</span></div>
+      <div className="extraction-metrics">
+        <span>{report.method_label}</span><span>{formatPageCount(report.suffix, report.page_count)}</span><span>{formatBytes(report.size)}</span>
+        {report.ocr_page_count > 0 && <span>{report.ocr_page_count} 页 OCR</span>}
+        <span>{report.char_count.toLocaleString()} 字符</span>
+        {report.confidence !== null && <span>OCR 置信度 {Math.round(report.confidence * 100)}%</span>}
+      </div>
+      {report.warnings.map((warning) => <p key={warning}><Warning size={14} />{warning}</p>)}
+    </article>)}</div>
     <h3>资料摘要</h3><p>{analysis.summary}</p>
     <h3>可确认事实</h3><div className="fact-list">{analysis.extracted_facts.map((fact, index) => <div key={`${fact.label}-${index}`}><CheckCircle size={17} /><div><strong>{fact.label}</strong><p>{fact.value}</p><small>{fact.source} / 可信度 {Math.round(fact.confidence * 100)}%</small></div></div>)}</div>
     <h3>信息缺口</h3><div className="uncertainty-list">{analysis.uncertainties.map((item) => <p key={item}><Warning size={16} />{item}</p>)}</div>
@@ -176,3 +188,5 @@ function FormActions({ saving, close, label }: { saving: boolean; close: () => v
 }
 
 function formatBytes(size: number) { return size > 1024 * 1024 ? `${(size / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(size / 1024))} KB`; }
+function formatPageCount(suffix: string, count: number) { return /xlsx?/i.test(suffix) ? `${count} 个工作表` : suffix === "pptx" ? `${count} 张幻灯片` : `${count} 页`; }
+function isOcrCandidate(filename: string) { return /\.(pdf|png|jpe?g|webp|bmp|tiff?)$/i.test(filename); }

@@ -58,8 +58,9 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
 
         <section className="panel linked-section">
           <div className="panel-heading"><div><h2>AI 资料分析</h2><p>来自资料分析助手，结果先保留为待确认，不直接覆盖报名信息。</p></div><Link href="/applications" className="text-link">分析新资料</Link></div>
-          {data.material_analyses.length === 0 ? <EmptyState title="暂无资料分析" description="可上传简历、表格、PDF 和文字记录，由助手跨文件整理。" /> : <div className="material-analysis-list">{data.material_analyses.map((analysis) => <article key={analysis.id}>
+          {data.material_analyses.length === 0 ? <EmptyState title="暂无资料分析" description="可上传简历、表格、PDF、扫描件和图片，由助手读取并跨文件整理。" /> : <div className="material-analysis-list">{data.material_analyses.map((analysis) => <article key={analysis.id}>
             <div className="material-analysis-title"><span className="record-icon"><Brain size={18} /></span><div><strong>{analysis.title}</strong><small>{analysis.file_names.join("、")}</small></div><span className="status-chip pending">待确认</span></div>
+            <div className="material-reading-inline">{analysis.extraction_report.map((report) => <span key={`${analysis.id}-${report.filename}`} className={report.status === "failed" ? "failed" : ""}>{report.status_label} · {report.ocr_page_count ? `${report.ocr_page_count} 页 OCR` : report.method_label}</span>)}</div>
             <p>{analysis.summary}</p>
             <div className="analysis-facts-inline">{analysis.extracted_facts.map((fact) => <span key={fact.label}><CheckCircle size={14} />{fact.label}</span>)}</div>
           </article>)}</div>}

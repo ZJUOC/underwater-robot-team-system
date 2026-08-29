@@ -84,7 +84,10 @@ class MockAIProvider(AIProvider):
         suffix_names = {
             "xlsx": "问卷或表格", "xls": "问卷或表格", "csv": "结构化记录",
             "pdf": "PDF 文档", "docx": "文档材料", "txt": "文本记录",
-            "md": "文本记录", "json": "结构化数据",
+            "pptx": "演示文稿", "md": "文本记录", "json": "结构化数据",
+            "png": "图片或扫描件", "jpg": "图片或扫描件", "jpeg": "图片或扫描件",
+            "webp": "图片或扫描件", "bmp": "图片或扫描件",
+            "tif": "图片或扫描件", "tiff": "图片或扫描件",
         }
         material_types = list(dict.fromkeys(suffix_names.get(item.get("suffix", ""), "其他资料") for item in materials))
         text = "\n".join([item.get("text", "") for item in materials] + [notes]).lower()
@@ -102,15 +105,26 @@ class MockAIProvider(AIProvider):
                 facts.append({"label": label, "value": f"材料中出现“{hit}”相关描述", "source": "上传资料", "confidence": 0.72})
         if not facts:
             facts.append({"label": "资料结构", "value": "已识别文件类型与基础元数据，内容事实需要人工确认", "source": "资料包", "confidence": 0.56})
-        unread = [item for item in materials if not item.get("text")]
-        uncertainties = []
+        unread = [item for item in materials if not item.get("text") or item.get("extraction", {}).get("status") == "failed"]
+        uncertainties: list[str] = []
         if unread:
-            details = "；".join(f"{item['filename']}：{item.get('parser_status', '暂未提取正文')}" for item in unread)
+            details = "；".join(
+                f"{item['filename']}：{item.get('extraction', {}).get('status_label', '暂未提取正文')}"
+                for item in unread
+            )
             uncertainties.append(f"{len(unread)} 份资料尚未完成正文抽取（{details}）。")
+        warning_files = [item for item in materials if item.get("extraction", {}).get("warnings")]
+        if warning_files:
+            uncertainties.append("部分文件存在读取提示，请先查看“材料读取情况”再使用分析结论。")
         if not notes.strip():
             uncertainties.append("没有提供材料背景，暂时无法判断不同文件是否属于同一位报名者。")
+        ocr_pages = sum(item.get("extraction", {}).get("ocr_page_count", 0) for item in materials)
+        char_count = sum(item.get("extraction", {}).get("char_count", 0) for item in materials)
+        reading = f"共读取约 {char_count} 个字符"
+        if ocr_pages:
+            reading += f"，其中 {ocr_pages} 页由 OCR 识别"
         return MaterialAnalysisOutput(
-            summary=f"已整理 {len(materials)} 份资料，覆盖{'、'.join(material_types)}。系统已将可确认事实、信息缺口和后续面试问题分开保存。",
+            summary=f"已整理 {len(materials)} 份资料，覆盖{'、'.join(material_types)}；{reading}。系统已将可确认事实、信息缺口和后续面试问题分开保存。",
             material_types=material_types,
             extracted_facts=facts,
             uncertainties=uncertainties or ["材料中的自我陈述尚未由面试或项目记录交叉验证。"],
