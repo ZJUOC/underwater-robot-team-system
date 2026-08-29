@@ -1,0 +1,16 @@
+.DS_Store
+.env
+.env.local
+.next/
+node_modules/
+__pycache__/
+*.pyc
+*.db
+.venv/
+.tmp/
+dist/
+coverage/
+
+# Private recruitment data: contains names, phone numbers and source IPs.
+data/原始面试数据/
+apps/api/app/seed_questionnaire.json
