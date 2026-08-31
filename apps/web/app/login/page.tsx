@@ -22,7 +22,7 @@ export default function LoginPage() {
       const response = await api<LoginResponse>("/api/auth/login", { method: "POST", body: JSON.stringify({ username: form.get("username"), password: form.get("password") }) });
       window.localStorage.setItem("robot_team_token", response.access_token);
       window.localStorage.setItem("robot_team_user", JSON.stringify(response.user));
-      router.replace("/applications");
+      router.replace("/research");
     } catch (e) { setError(e instanceof Error ? e.message : "登录失败"); }
     finally { setLoading(false); }
   }

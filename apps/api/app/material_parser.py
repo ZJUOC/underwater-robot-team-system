@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import threading
 from dataclasses import asdict, dataclass, field
 from io import BytesIO
@@ -32,16 +33,43 @@ class MaterialExtractionResult:
     char_count: int = 0
     confidence: Optional[float] = None
     warnings: list[str] = field(default_factory=list)
+    segments: list[dict[str, Any]] = field(default_factory=list)
 
     def report(self, filename: str, suffix: str, size: int) -> dict[str, Any]:
         payload = asdict(self)
         payload.pop("text")
+        payload.pop("segments")
         return {"filename": filename, "suffix": suffix, "size": size, **payload}
 
 
 _ocr_engine: Any = None
 _ocr_init_lock = threading.Lock()
 _ocr_run_lock = threading.Lock()
+
+
+def _split_segments(text: str, method: str, confidence: Optional[float] = None) -> list[dict[str, Any]]:
+    """Split parser markers into source-addressable sections for reviewer citations."""
+    if not text.strip():
+        return []
+    marker = re.compile(r"^\[(.+)]$")
+    segments: list[dict[str, Any]] = []
+    locator = "全文"
+    lines: list[str] = []
+    for line in text.splitlines():
+        matched = marker.match(line.strip())
+        if matched:
+            if lines:
+                value = "\n".join(lines).strip()
+                if value:
+                    segments.append({"locator": locator, "text": value, "method": method, "confidence": confidence})
+            locator = matched.group(1)
+            lines = []
+        else:
+            lines.append(line)
+    value = "\n".join(lines).strip()
+    if value:
+        segments.append({"locator": locator, "text": value, "method": method, "confidence": confidence})
+    return segments or [{"locator": "全文", "text": text.strip(), "method": method, "confidence": confidence}]
 
 
 def _decode_text(content: bytes) -> str:
@@ -230,6 +258,7 @@ def _image_text(content: bytes) -> MaterialExtractionResult:
         char_count=len(text),
         confidence=confidence,
         warnings=warnings or ([] if text else ["未识别到可用文字，请检查图片清晰度。"]),
+        segments=_split_segments(text, "image_ocr", confidence),
     )
 
 
@@ -306,6 +335,7 @@ def _pdf_text(content: bytes) -> MaterialExtractionResult:
         char_count=len(text),
         confidence=confidence,
         warnings=warnings or ([] if text else ["PDF 中没有可读取的文字。"]),
+        segments=_split_segments(text, method, confidence),
     )
 
 
@@ -320,6 +350,7 @@ def _complete(text: str, method: str, method_label: str, page_count: int = 1) ->
         page_count=page_count,
         char_count=len(text),
         warnings=[] if text else ["文件中没有发现可提取的正文。"],
+        segments=_split_segments(text, method),
     )
 
 

@@ -34,3 +34,16 @@ export async function apiForm<T>(path: string, body: FormData): Promise<T> {
   }
   return response.json();
 }
+
+export async function apiBlob(path: string): Promise<Blob> {
+  const token = typeof window !== "undefined" ? window.localStorage.getItem("robot_team_token") : null;
+  const response = await fetch(`${API_URL}${path}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({ message: "下载失败" }));
+    throw new ApiError(payload.message ?? payload.detail ?? "下载失败", response.status);
+  }
+  return response.blob();
+}

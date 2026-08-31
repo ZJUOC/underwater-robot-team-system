@@ -187,3 +187,163 @@ export interface InterviewDetail extends InterviewSummary {
     confidence: number;
   }[];
 }
+
+export type ResearchRecommendation = "recommend_join" | "follow_up" | "insufficient_evidence" | "not_recommended" | "needs_review";
+
+export interface ResearchTask {
+  id: number;
+  title: string;
+  description: string;
+  instructions: { team_size?: number; duration_days?: number; team_deliverables?: string[]; individual_deliverables?: string[] };
+  rubric: { key: string; label: string; scope: "team" | "individual"; max_score: number }[];
+  rubric_version: string;
+  duration_days: number;
+  status: string;
+  starts_at: string;
+  due_at: string | null;
+  created_at: string;
+}
+
+export interface ResearchTeamMember {
+  id: number;
+  member_id: number;
+  name: string;
+  student_id: string;
+  major: string;
+  desired_department: string;
+  role_summary: string;
+  is_leader: boolean;
+}
+
+export interface ResearchSubmissionFile {
+  id: number;
+  submission_id: number;
+  member_id: number | null;
+  kind: string;
+  original_name: string;
+  suffix: string;
+  content_type: string;
+  size: number;
+  sha256: string;
+  extraction_status: string;
+  extraction_report: MaterialExtractionReport;
+  segments: { locator: string; text: string; method: string; confidence: number | null }[];
+  created_at: string;
+}
+
+export interface ResearchContribution {
+  id: number;
+  submission_id: number;
+  team_member_id: number;
+  role_summary: string;
+  contribution: string;
+  key_findings: string;
+  challenges: string;
+  source_validation: string;
+  preferred_direction: string;
+  peer_confirmation: Record<string, unknown>;
+  updated_at: string;
+}
+
+export interface ResearchCriterion {
+  key: string;
+  label: string;
+  score: number;
+  max_score: number;
+  confidence: number;
+  reasoning: string;
+  evidence: { filename: string; locator: string; quote: string }[];
+  missing_information: string[];
+}
+
+export interface CandidateResearchAssessment {
+  id: number;
+  member_id: number;
+  member_name: string;
+  individual_score: number;
+  total_score: number;
+  contribution_confidence: number;
+  recommendation: ResearchRecommendation;
+  summary: string;
+  criteria: ResearchCriterion[];
+  evidence: { filename: string; locator: string; quote: string }[];
+  suggested_questions: string[];
+}
+
+export interface TeamResearchAssessment {
+  id: number;
+  status: string;
+  model_version: string;
+  prompt_version: string;
+  summary: string;
+  team_score: number;
+  criteria: ResearchCriterion[];
+  evidence: { filename: string; locator: string; quote: string }[];
+  conflicts: { field?: string; detail?: string }[];
+  missing_information: string[];
+  suggested_questions: string[];
+  candidates: CandidateResearchAssessment[];
+  created_at: string;
+}
+
+export interface HumanResearchReview {
+  id: number;
+  team_id: number;
+  member_id: number;
+  reviewer_id: number;
+  reviewer_name: string;
+  status: string;
+  recommendation: ResearchRecommendation;
+  criteria_scores: Record<string, number>;
+  summary: string;
+  concerns: string;
+  follow_up_questions: string[];
+  submitted_at: string | null;
+  updated_at: string;
+}
+
+export interface AdmissionDecision {
+  id: number;
+  team_id: number;
+  member_id: number;
+  status: ResearchRecommendation;
+  reason: string;
+  decided_by: number;
+  decider_name: string;
+  decided_at: string;
+}
+
+export interface ResearchSubmission {
+  id: number;
+  team_id: number;
+  version: number;
+  status: string;
+  note: string;
+  submitted_at: string | null;
+  files: ResearchSubmissionFile[];
+  contributions: ResearchContribution[];
+}
+
+export interface ResearchTeamSummary {
+  id: number;
+  task_id: number;
+  task_title: string;
+  name: string;
+  status: string;
+  due_at: string | null;
+  members: ResearchTeamMember[];
+  file_count: number;
+  contribution_count: number;
+  team_score: number | null;
+  decision_count: number;
+  submitted_at: string | null;
+  updated_at: string;
+}
+
+export interface ResearchTeamDetail extends ResearchTeamSummary {
+  task: ResearchTask;
+  submission: ResearchSubmission | null;
+  assessment: TeamResearchAssessment | null;
+  reviews: HumanResearchReview[];
+  decisions: AdmissionDecision[];
+}

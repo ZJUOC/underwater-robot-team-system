@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     ai_api_key: str = ""
     ai_model: str = ""
     auth_secret: str = "robot-team-local-dev-secret"
+    material_storage_dir: str = "./private_uploads"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

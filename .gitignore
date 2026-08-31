@@ -15,3 +15,4 @@ coverage/
 # Private recruitment data: contains names, phone numbers and source IPs.
 data/原始面试数据/
 apps/api/app/seed_questionnaire.json
+apps/api/private_uploads/

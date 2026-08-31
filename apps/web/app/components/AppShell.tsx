@@ -4,12 +4,13 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
-  Anchor, Brain, CaretDown, ClipboardText, Database, GearSix, House,
+  Anchor, Brain, CaretDown, ClipboardText, Database, Files, GearSix, House,
   IdentificationCard, ListChecks, MagnifyingGlass, UsersThree,
 } from "@phosphor-icons/react";
 import type { Icon } from "@phosphor-icons/react";
 
 const nav: { href: string; label: string; icon: Icon }[] = [
+  { href: "/research", label: "调研审核", icon: Files },
   { href: "/applications", label: "纳新档案", icon: ClipboardText },
   { href: "/members", label: "成员中心", icon: IdentificationCard },
   { href: "/interviews", label: "面试管理", icon: UsersThree },
@@ -20,12 +21,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [authReady, setAuthReady] = useState(false);
+  const isPublicRoute = pathname === "/" || pathname === "/login";
   useEffect(() => {
-    if (pathname === "/login") { setAuthReady(true); return; }
+    if (isPublicRoute) { setAuthReady(true); return; }
     if (!window.localStorage.getItem("robot_team_token")) { router.replace("/login"); return; }
     setAuthReady(true);
-  }, [pathname, router]);
-  if (pathname === "/login") return <>{children}</>;
+  }, [isPublicRoute, router]);
+  if (isPublicRoute) return <>{children}</>;
   if (!authReady) return <div className="auth-loading" aria-label="正在检查登录状态" />;
   function logout() {
     window.localStorage.removeItem("robot_team_token");

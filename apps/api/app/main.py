@@ -20,6 +20,7 @@ from .personality_engine import analyze_personality_signals
 from .seed import seed_demo
 from .services import analyze_interview, counts_by_status, review_evidence
 from .providers import get_ai_provider
+from .research import router as research_router
 
 
 @asynccontextmanager
@@ -39,6 +40,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.include_router(research_router)
 
 
 @app.middleware("http")
