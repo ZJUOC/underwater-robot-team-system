@@ -89,15 +89,72 @@ def _validate_archive(archive: ZipFile) -> None:
         raise ValueError("压缩文档展开后超过安全限制")
 
 
+def _xlsx_shared_strings(workbook: ZipFile, namespace: dict[str, str]) -> list[str]:
+    if "xl/sharedStrings.xml" not in workbook.namelist():
+        return []
+    root = ElementTree.fromstring(workbook.read("xl/sharedStrings.xml"))
+    return ["".join(node.text or "" for node in item.iterfind(".//x:t", namespace))
+            for item in root.findall("x:si", namespace)]
+
+
+def _xlsx_cell_text(cell: Any, shared: list[str], namespace: dict[str, str]) -> str:
+    kind = cell.attrib.get("t")
+    value = cell.find("x:v", namespace)
+    inline = cell.find("x:is", namespace)
+    if kind == "s" and value is not None and value.text:
+        index = int(value.text)
+        return shared[index].strip() if 0 <= index < len(shared) else ""
+    if kind == "inlineStr" and inline is not None:
+        return "".join(node.text or "" for node in inline.iterfind(".//x:t", namespace)).strip()
+    return value.text.strip() if value is not None and value.text else ""
+
+
+def _xlsx_column_index(reference: str) -> int:
+    letters = re.match(r"[A-Z]+", reference.upper())
+    if not letters:
+        return 0
+    index = 0
+    for letter in letters.group():
+        index = index * 26 + ord(letter) - ord("A") + 1
+    return index - 1
+
+
+def extract_xlsx_records(content: bytes) -> list[dict[str, str]]:
+    """Read the first non-empty XLSX worksheet as header-keyed text rows."""
+    with ZipFile(BytesIO(content)) as workbook:
+        _validate_archive(workbook)
+        namespace = {"x": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
+        shared = _xlsx_shared_strings(workbook, namespace)
+        sheets = sorted(
+            name for name in workbook.namelist()
+            if PurePosixPath(name).parent == PurePosixPath("xl/worksheets") and name.endswith(".xml")
+        )
+        for sheet_name in sheets:
+            root = ElementTree.fromstring(workbook.read(sheet_name))
+            table: list[list[str]] = []
+            for row in root.findall(".//x:row", namespace):
+                cells = {
+                    _xlsx_column_index(cell.attrib.get("r", "")): _xlsx_cell_text(cell, shared, namespace)
+                    for cell in row.findall("x:c", namespace)
+                }
+                if cells:
+                    table.append([cells.get(index, "") for index in range(max(cells) + 1)])
+            if not table:
+                continue
+            headers = [value.strip() for value in table[0]]
+            return [
+                {header: values[index] if index < len(values) else ""
+                 for index, header in enumerate(headers) if header}
+                for values in table[1:] if any(values)
+            ]
+    return []
+
+
 def _xlsx_text(content: bytes) -> tuple[str, int]:
     with ZipFile(BytesIO(content)) as workbook:
         _validate_archive(workbook)
         namespace = {"x": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
-        shared: list[str] = []
-        if "xl/sharedStrings.xml" in workbook.namelist():
-            root = ElementTree.fromstring(workbook.read("xl/sharedStrings.xml"))
-            for item in root.findall("x:si", namespace):
-                shared.append("".join(node.text or "" for node in item.iterfind(".//x:t", namespace)))
+        shared = _xlsx_shared_strings(workbook, namespace)
 
         lines: list[str] = []
         sheets = sorted(
@@ -110,18 +167,7 @@ def _xlsx_text(content: bytes) -> tuple[str, int]:
             for row in root.findall(".//x:row", namespace):
                 values: list[str] = []
                 for cell in row.findall("x:c", namespace):
-                    kind = cell.attrib.get("t")
-                    value = cell.find("x:v", namespace)
-                    inline = cell.find("x:is", namespace)
-                    rendered = ""
-                    if kind == "s" and value is not None and value.text:
-                        index = int(value.text)
-                        rendered = shared[index] if 0 <= index < len(shared) else ""
-                    elif kind == "inlineStr" and inline is not None:
-                        rendered = "".join(node.text or "" for node in inline.iterfind(".//x:t", namespace))
-                    elif value is not None and value.text:
-                        rendered = value.text
-                    values.append(rendered.strip())
+                    values.append(_xlsx_cell_text(cell, shared, namespace))
                 if any(values):
                     lines.append(" | ".join(values))
                 if sum(len(line) for line in lines) >= TEXT_LIMIT:

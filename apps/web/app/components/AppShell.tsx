@@ -4,15 +4,14 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
-  Anchor, Brain, CaretDown, ClipboardText, Database, Files, GearSix, House,
+  Anchor, Brain, CaretDown, ClipboardText, Database, Files, GearSix,
   IdentificationCard, ListChecks, MagnifyingGlass, UsersThree,
 } from "@phosphor-icons/react";
 import type { Icon } from "@phosphor-icons/react";
 
-const nav: { href: string; label: string; icon: Icon }[] = [
+const recruitmentNav: { href: string; label: string; icon: Icon }[] = [
   { href: "/research", label: "调研审核", icon: Files },
   { href: "/applications", label: "纳新档案", icon: ClipboardText },
-  { href: "/members", label: "成员中心", icon: IdentificationCard },
   { href: "/interviews", label: "面试管理", icon: UsersThree },
   { href: "/evidence", label: "证据审核", icon: Brain },
 ];
@@ -42,16 +41,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div><strong>ROV TEAM</strong><span>成员协作系统</span></div>
         </div>
         <nav className="primary-nav" aria-label="主要导航">
-          <p className="nav-group-label">人员与面试</p>
-          {nav.map(({ href, label, icon: NavIcon }) => {
-            const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(`${href}/`));
-            return <Link key={href} href={href} className={active ? "nav-item active" : "nav-item"}>
-              <NavIcon size={18} weight={active ? "fill" : "regular"} />
-              <span>{label}</span>
-            </Link>;
-          })}
-          <p className="nav-group-label later">后续阶段</p>
-          <div className="nav-item disabled"><House size={18} /><span>团队工作台</span><small>Later</small></div>
+          <div className="recruitment-nav">
+            <div className={`nav-item nav-parent ${recruitmentNav.some(({ href }) => pathname === href || pathname.startsWith(`${href}/`)) ? "active" : ""}`}>
+              <ClipboardText size={18} weight="fill" />
+              <span>纳新管理</span>
+            </div>
+            <div className="nav-subnav">
+              {recruitmentNav.map(({ href, label, icon: NavIcon }) => {
+                const active = pathname === href || pathname.startsWith(`${href}/`);
+                return <Link key={href} href={href} className={active ? "nav-subitem active" : "nav-subitem"}>
+                  <NavIcon size={15} weight={active ? "fill" : "regular"} />
+                  <span>{label}</span>
+                </Link>;
+              })}
+            </div>
+          </div>
+          <Link href="/members" className={pathname === "/members" || pathname.startsWith("/members/") ? "nav-item active" : "nav-item"}>
+            <IdentificationCard size={18} weight={pathname.startsWith("/members") ? "fill" : "regular"} />
+            <span>成员中心</span>
+          </Link>
           <div className="nav-item disabled"><ListChecks size={18} /><span>项目与任务</span><small>Phase 2</small></div>
           <div className="nav-item disabled"><Database size={18} /><span>智能组队</span><small>Phase 4</small></div>
         </nav>

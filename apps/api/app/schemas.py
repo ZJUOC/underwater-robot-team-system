@@ -139,6 +139,15 @@ class ApplicationSummary(BaseModel):
     submission_count: int
 
 
+class ApplicationImportResult(BaseModel):
+    filename: str
+    total_rows: int
+    created_archives: int
+    merged_submissions: int
+    unchanged_rows: int
+    needs_review: int
+
+
 class MaterialAnalysisRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int

@@ -1,10 +1,11 @@
 from io import BytesIO
 from unittest import TestCase
 
+from zipfile import ZipFile
 import pymupdf
 from PIL import Image, ImageDraw, ImageFont
 
-from app.material_parser import extract_material_text
+from app.material_parser import extract_material_text, extract_xlsx_records
 
 
 def make_scan() -> bytes:
@@ -13,6 +14,18 @@ def make_scan() -> bytes:
     draw.text((30, 60), "STM32 ROBOT TEAM 2026", font=ImageFont.load_default(size=58), fill="black")
     buffer = BytesIO()
     image.save(buffer, format="PNG")
+    return buffer.getvalue()
+
+
+def make_xlsx() -> bytes:
+    worksheet = """<?xml version="1.0" encoding="UTF-8"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>
+<row r="1"><c r="A1" t="inlineStr"><is><t>姓名</t></is></c><c r="B1" t="inlineStr"><is><t>学号</t></is></c><c r="C1" t="inlineStr"><is><t>专业</t></is></c></row>
+<row r="2"><c r="A2" t="inlineStr"><is><t>张三</t></is></c><c r="C2" t="inlineStr"><is><t>自动化</t></is></c></row>
+</sheetData></worksheet>"""
+    buffer = BytesIO()
+    with ZipFile(buffer, "w") as workbook:
+        workbook.writestr("xl/worksheets/sheet1.xml", worksheet)
     return buffer.getvalue()
 
 
@@ -25,6 +38,11 @@ class MaterialParserTests(TestCase):
         self.assertEqual(result.ocr_page_count, 1)
         self.assertIn("STM32", result.text)
         self.assertGreater(result.confidence or 0, 0.8)
+
+    def test_xlsx_records_preserve_blank_columns(self) -> None:
+        records = extract_xlsx_records(make_xlsx())
+
+        self.assertEqual(records, [{"姓名": "张三", "学号": "", "专业": "自动化"}])
 
     def test_pdf_prefers_a_usable_text_layer(self) -> None:
         document = pymupdf.open()
