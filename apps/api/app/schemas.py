@@ -476,3 +476,72 @@ class ErrorResponse(BaseModel):
     code: str
     message: str
     detail: dict = {}
+
+
+class RoutineTaskWrite(BaseModel):
+    title: str = Field(min_length=1, max_length=160)
+    description: str = ""
+    due_at: Optional[datetime] = None
+    status: str = "draft"
+    assignee_ids: list[int] = []
+
+
+class TaskSubmissionReview(BaseModel):
+    status: str = "reviewed"
+    feedback: str = ""
+    score: Optional[float] = Field(default=None, ge=0, le=100)
+
+
+class CourseSessionWrite(BaseModel):
+    title: str = Field(min_length=1, max_length=160)
+    starts_at: datetime
+    duration_minutes: int = Field(default=90, ge=15, le=480)
+    location: str = ""
+    description: str = ""
+    status: str = "scheduled"
+
+
+class AttendanceWrite(BaseModel):
+    member_id: int
+    status: str
+    note: str = ""
+
+
+class SetpTeamWrite(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    member_ids: list[int] = []
+    leader_member_id: Optional[int] = None
+    status: str = "active"
+
+
+class SmartTeamRequest(BaseModel):
+    team_size: int = Field(default=3, ge=2, le=8)
+    name_prefix: str = "SETP 小组"
+
+
+class SetpProjectWrite(BaseModel):
+    title: str = Field(min_length=1, max_length=180)
+    team_id: Optional[int] = None
+    summary: str = ""
+    status: str = "application"
+    budget_total: float = Field(default=0, ge=0)
+
+
+class ProjectIssueWrite(BaseModel):
+    period_start: datetime
+    problems: str = Field(min_length=1)
+    actions: str = ""
+    next_steps: str = ""
+
+
+class ProjectReviewWrite(BaseModel):
+    status: str
+    review_notes: str = ""
+    defense_record: str = ""
+
+
+class ProjectExpenseWrite(BaseModel):
+    item: str = Field(min_length=1, max_length=160)
+    amount: float = Field(ge=0)
+    note: str = ""
+    occurred_at: datetime
