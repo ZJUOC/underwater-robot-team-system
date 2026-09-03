@@ -23,6 +23,7 @@ from .seed import import_questionnaire_records, seed_demo
 from .services import analyze_interview, counts_by_status, review_evidence
 from .providers import get_ai_provider
 from .research import router as research_router
+from .operations import router as operations_router
 
 
 @asynccontextmanager
@@ -43,6 +44,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(research_router)
+app.include_router(operations_router)
 
 
 @app.middleware("http")

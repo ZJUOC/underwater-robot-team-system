@@ -16,9 +16,31 @@ const recruitmentNav: { href: string; label: string; icon: Icon }[] = [
   { href: "/evidence", label: "证据审核", icon: Brain },
 ];
 
-const futureNav: { label: string; icon: Icon; items: string[] }[] = [
-  { label: "任务与课程", icon: ListChecks, items: ["平时任务管理", "课时管理", "考勤管理"] },
-  { label: "SETP", icon: Database, items: ["组队管理", "项目管理"] },
+const operationNav: { label: string; icon: Icon; items: { href: string; label: string; children?: { href: string; label: string }[] }[] }[] = [
+  {
+    label: "任务与课程", icon: ListChecks,
+    items: [
+      { href: "/training/tasks", label: "平时任务管理" },
+      { href: "/training/classes", label: "课时管理" },
+      { href: "/training/attendance", label: "考勤管理" },
+    ],
+  },
+  {
+    label: "SETP", icon: Database,
+    items: [
+      { href: "/setp/teams", label: "组队管理" },
+      {
+        href: "/setp/projects/application", label: "项目管理",
+        children: [
+          { href: "/setp/projects/application", label: "项目申请与审核" },
+          { href: "/setp/projects/progress", label: "项目进度管理与查看" },
+          { href: "/setp/projects/midterm", label: "项目中期答辩" },
+          { href: "/setp/projects/final", label: "结题答辩" },
+          { href: "/setp/projects/budget", label: "经费管理" },
+        ],
+      },
+    ],
+  },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -65,12 +87,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <IdentificationCard size={18} weight={pathname.startsWith("/members") ? "fill" : "regular"} />
             <span>成员中心</span>
           </Link>
-          {futureNav.map(({ label, icon: NavIcon, items }) => <div className="nav-section" key={label}>
-            <div className="nav-item nav-parent" aria-disabled="true"><NavIcon size={18} /><span>{label}</span></div>
-            <div className="nav-subnav">
-              {items.map((item) => <div className="nav-subitem disabled" aria-disabled="true" key={item}><span>{item}</span></div>)}
-            </div>
-          </div>)}
+          {operationNav.map(({ label, icon: NavIcon, items }) => {
+            const sectionActive = items.some(item => pathname === item.href || pathname.startsWith(item.href.replace("/application", "")));
+            return <div className="nav-section operations-nav" key={label}>
+              <div className={`nav-item nav-parent ${sectionActive ? "active" : ""}`}><NavIcon size={18} weight={sectionActive ? "fill" : "regular"} /><span>{label}</span></div>
+              <div className="nav-subnav">
+                {items.map(item => {
+                  const active = item.children ? pathname.startsWith("/setp/projects/") : pathname === item.href;
+                  return <div className="nav-subgroup" key={item.href}>
+                    <Link href={item.href} className={active ? "nav-subitem active" : "nav-subitem"}><span>{item.label}</span></Link>
+                    {item.children && <div className="nav-thirdnav">{item.children.map(child =>
+                      <Link key={child.href} href={child.href} className={pathname === child.href ? "nav-thirditem active" : "nav-thirditem"}>{child.label}</Link>
+                    )}</div>}
+                  </div>;
+                })}
+              </div>
+            </div>;
+          })}
         </nav>
         <div className="sidebar-footer">
           <GearSix size={18} /><span>系统设置</span>

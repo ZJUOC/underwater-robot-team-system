@@ -347,3 +347,117 @@ export interface ResearchTeamDetail extends ResearchTeamSummary {
   reviews: HumanResearchReview[];
   decisions: AdmissionDecision[];
 }
+
+export interface OperationsMember {
+  id: number;
+  name: string;
+  student_id: string;
+  department: string;
+  grade: string;
+}
+
+export interface OperationsFile {
+  id: string;
+  title?: string;
+  kind?: string;
+  original_name: string;
+  content_type: string;
+  size: number;
+  uploaded_at: string;
+}
+
+export interface RoutineSubmission {
+  id: string;
+  member_id: number;
+  member_name: string;
+  summary: string;
+  status: string;
+  feedback: string;
+  score: number | null;
+  submitted_at: string;
+  file: OperationsFile | null;
+}
+
+export interface RoutineTask {
+  id: number;
+  title: string;
+  description: string;
+  due_at: string | null;
+  status: string;
+  assignee_ids: number[];
+  submissions: RoutineSubmission[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CourseSession {
+  id: number;
+  title: string;
+  starts_at: string;
+  duration_minutes: number;
+  location: string;
+  description: string;
+  status: string;
+  materials: OperationsFile[];
+  attendance: Record<string, { status: string; note: string; checked_at?: string }>;
+}
+
+export interface AttendanceMember extends OperationsMember {
+  status: string;
+  note: string;
+  checked_at?: string;
+}
+
+export interface SetpTeam {
+  id: number;
+  name: string;
+  status: string;
+  member_ids: number[];
+  leader_member_id: number | null;
+  members: { id: number; name: string; department: string; grade: string; is_leader: boolean }[];
+}
+
+export interface SetpProject {
+  id: number;
+  team_id: number | null;
+  team_name: string;
+  title: string;
+  summary: string;
+  status: string;
+  budget_total: number;
+  application: ProjectStage;
+  issue_records: ProjectIssue[];
+  midterm: ProjectStage;
+  final: ProjectStage;
+  expenses: ProjectExpense[];
+  next_issue_due: string;
+  issue_overdue: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProjectStage {
+  status: string;
+  review_notes: string;
+  defense_record?: string;
+  documents: OperationsFile[];
+  reviewed_at?: string;
+}
+
+export interface ProjectIssue {
+  id: string;
+  period_start: string;
+  problems: string;
+  actions: string;
+  next_steps: string;
+  submitted_at: string;
+}
+
+export interface ProjectExpense {
+  id: string;
+  item: string;
+  amount: number;
+  note: string;
+  occurred_at: string;
+  created_at: string;
+}

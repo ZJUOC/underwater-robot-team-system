@@ -376,3 +376,52 @@ class AuditLog(Base):
     resource_id: Mapped[str] = mapped_column(String(64))
     detail: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+# Club-scale admin aggregates stay in JSON; normalize only if concurrent writes or reporting volume requires it.
+class RoutineTask(TimestampMixin, Base):
+    __tablename__ = "routine_tasks"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    title: Mapped[str] = mapped_column(String(160))
+    description: Mapped[str] = mapped_column(Text, default="")
+    due_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    status: Mapped[str] = mapped_column(String(32), default="draft")
+    assignee_ids: Mapped[list[int]] = mapped_column(JSON, default=list)
+    submissions: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
+
+
+class CourseSession(TimestampMixin, Base):
+    __tablename__ = "course_sessions"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    title: Mapped[str] = mapped_column(String(160))
+    starts_at: Mapped[datetime] = mapped_column(DateTime)
+    duration_minutes: Mapped[int] = mapped_column(Integer, default=90)
+    location: Mapped[str] = mapped_column(String(160), default="")
+    description: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[str] = mapped_column(String(32), default="scheduled")
+    materials: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
+    attendance: Mapped[dict[str, dict[str, Any]]] = mapped_column(JSON, default=dict)
+
+
+class SetpTeam(TimestampMixin, Base):
+    __tablename__ = "setp_teams"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(120))
+    status: Mapped[str] = mapped_column(String(32), default="active")
+    member_ids: Mapped[list[int]] = mapped_column(JSON, default=list)
+    leader_member_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+
+
+class SetpProject(TimestampMixin, Base):
+    __tablename__ = "setp_projects"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    team_id: Mapped[Optional[int]] = mapped_column(ForeignKey("setp_teams.id"), nullable=True, index=True)
+    title: Mapped[str] = mapped_column(String(180))
+    summary: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[str] = mapped_column(String(32), default="application")
+    budget_total: Mapped[float] = mapped_column(Float, default=0)
+    application: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    issue_records: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
+    midterm: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    final: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    expenses: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
