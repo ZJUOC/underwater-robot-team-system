@@ -113,7 +113,7 @@ def application_summary(archive: models.ApplicationArchive) -> schemas.Applicati
         personality_profile=member.personality_profile,
         applied_at=archive.applied_at, profile_completion=archive.profile_completion,
         data_quality=archive.data_quality, source_type=archive.source_type, source_name=archive.source_name,
-        submission_count=len(submissions),
+        submission_count=len(submissions), available_time=archive.available_time,
     )
 
 

@@ -10,10 +10,15 @@ import {
 import type { Icon } from "@phosphor-icons/react";
 
 const recruitmentNav: { href: string; label: string; icon: Icon }[] = [
-  { href: "/research", label: "调研审核", icon: Files },
+  { href: "/research", label: "面试小组作业", icon: Files },
   { href: "/applications", label: "纳新档案", icon: ClipboardText },
   { href: "/interviews", label: "面试管理", icon: UsersThree },
   { href: "/evidence", label: "证据审核", icon: Brain },
+];
+
+const futureNav: { label: string; icon: Icon; items: string[] }[] = [
+  { label: "任务与课程", icon: ListChecks, items: ["平时任务管理", "课时管理", "考勤管理"] },
+  { label: "SETP", icon: Database, items: ["组队管理", "项目管理"] },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -41,7 +46,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div><strong>ROV TEAM</strong><span>成员协作系统</span></div>
         </div>
         <nav className="primary-nav" aria-label="主要导航">
-          <div className="recruitment-nav">
+          <div className="nav-section">
             <div className={`nav-item nav-parent ${recruitmentNav.some(({ href }) => pathname === href || pathname.startsWith(`${href}/`)) ? "active" : ""}`}>
               <ClipboardText size={18} weight="fill" />
               <span>纳新管理</span>
@@ -60,8 +65,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <IdentificationCard size={18} weight={pathname.startsWith("/members") ? "fill" : "regular"} />
             <span>成员中心</span>
           </Link>
-          <div className="nav-item disabled"><ListChecks size={18} /><span>项目与任务</span><small>Phase 2</small></div>
-          <div className="nav-item disabled"><Database size={18} /><span>智能组队</span><small>Phase 4</small></div>
+          {futureNav.map(({ label, icon: NavIcon, items }) => <div className="nav-section" key={label}>
+            <div className="nav-item nav-parent" aria-disabled="true"><NavIcon size={18} /><span>{label}</span></div>
+            <div className="nav-subnav">
+              {items.map((item) => <div className="nav-subitem disabled" aria-disabled="true" key={item}><span>{item}</span></div>)}
+            </div>
+          </div>)}
         </nav>
         <div className="sidebar-footer">
           <GearSix size={18} /><span>系统设置</span>

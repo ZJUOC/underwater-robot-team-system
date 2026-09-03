@@ -137,6 +137,7 @@ class ApplicationSummary(BaseModel):
     source_type: str
     source_name: str
     submission_count: int
+    available_time: str
 
 
 class ApplicationImportResult(BaseModel):
@@ -169,7 +170,6 @@ class ApplicationDetail(ApplicationSummary):
     phone_masked: str
     motivation: str
     prior_experience: str
-    available_time: str
     raw_answers: dict
     tags: list[MemberTagRead]
     evidence: list[EvidenceRead]
