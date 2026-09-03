@@ -88,17 +88,43 @@ def seed_demo(db: Session) -> None:
     db.commit()
 
 
+QUESTIONNAIRE_REQUIRED_FIELDS = {
+    "序号",
+    "提交答卷时间",
+    "1、您的 姓名 学号 是？",
+    "2、您的专业是？",
+    "3、您的手机号码是？",
+    "4、您对哪些方向感兴趣？",
+    "5、您最想进入我们的哪个部门？",
+    "6、在此之前，您有无相关基础？",
+    "7、为什么想加入我们？（此题不会影响面试，随心所欲作答）",
+    "8、您认为您可以每周付出多少时间参加社团活动？",
+}
+
+
 def _seed_questionnaire_archives(db: Session) -> None:
     private_source = Path(__file__).with_name("seed_questionnaire.json")
     example_source = Path(__file__).with_name("seed_questionnaire.example.json")
     source_path = private_source if private_source.exists() else example_source
-    if not source_path.exists():
-        return
-    records = json.loads(source_path.read_text(encoding="utf-8"))
-    source_name = (
-        "380581708_按文本_水下机器人协会纳新问卷_54_54(1).xlsx"
-        if source_path == private_source else "synthetic-recruitment-demo.json"
-    )
+    if source_path.exists():
+        import_questionnaire_records(
+            db,
+            json.loads(source_path.read_text(encoding="utf-8")),
+            source_path.name if source_path == private_source else "synthetic-recruitment-demo.json",
+        )
+
+
+def import_questionnaire_records(
+    db: Session, records: list[dict], source_name: str, recruitment_cycle: str = "2026 秋季纳新",
+) -> dict[str, int]:
+    if not records:
+        raise ValueError("问卷中没有可导入的数据行")
+    missing_fields = QUESTIONNAIRE_REQUIRED_FIELDS - records[0].keys()
+    if missing_fields:
+        raise ValueError(f"问卷缺少必要字段：{'、'.join(sorted(missing_fields))}")
+
+    result = {"total_rows": len(records), "created_archives": 0, "merged_submissions": 0,
+              "unchanged_rows": 0, "needs_review": 0}
     by_name: dict[str, models.Member] = {}
     for record in records:
         row_no = str(record.get("序号", "")).zfill(3)
@@ -138,30 +164,39 @@ def _seed_questionnaire_archives(db: Session) -> None:
         archive = db.scalar(select(models.ApplicationArchive).where(models.ApplicationArchive.member_id == member.id))
         if archive:
             submissions = list(archive.raw_answers.get("submissions", []))
-            if not any(str(item.get("序号")) == str(record.get("序号")) for item in submissions):
+            if record in submissions:
+                result["unchanged_rows"] += 1
+            else:
                 submissions.append(record)
                 archive.raw_answers = {**archive.raw_answers, "submissions": submissions}
                 archive.data_quality = "needs_review"
+                result["merged_submissions"] += 1
             continue
         submitted = str(record.get("提交答卷时间", ""))
         try:
             applied_at = datetime.strptime(submitted, "%Y/%m/%d %H:%M:%S")
         except ValueError:
             applied_at = datetime.utcnow()
+        prior_experience = str(record.get("6、在此之前，您有无相关基础？", ""))
+        motivation = str(record.get("7、为什么想加入我们？（此题不会影响面试，随心所欲作答）", ""))
+        member.personality_profile = analyze_personality_signals(
+            motivation=motivation, prior_experience=prior_experience, available_time=member.weekly_commitment,
+        )
         core_values = [name, student_id, member.major, member.phone, member.desired_department,
-                       member.interests, record.get("6、在此之前，您有无相关基础？"),
-                       record.get("7、为什么想加入我们？（此题不会影响面试，随心所欲作答）")]
+                       member.interests, prior_experience, motivation]
         completion = round(sum(bool(value) for value in core_values) / len(core_values), 2)
         db.add(models.ApplicationArchive(
-            member_id=member.id, application_no=f"APP-2026-{row_no}", recruitment_cycle="2026 秋季纳新",
+            member_id=member.id, application_no=f"APP-2026-{member.id:04d}", recruitment_cycle=recruitment_cycle,
             source_type="questionnaire", source_name=source_name, applied_at=applied_at,
-            motivation=str(record.get("7、为什么想加入我们？（此题不会影响面试，随心所欲作答）", "")),
-            prior_experience=str(record.get("6、在此之前，您有无相关基础？", "")),
+            motivation=motivation, prior_experience=prior_experience,
             available_time=member.weekly_commitment,
             raw_answers={"submissions": [record], "quality_flags": quality_flags},
             profile_completion=completion, data_quality="needs_review" if quality_flags else "ready",
         ))
+        result["created_archives"] += 1
+        result["needs_review"] += bool(quality_flags)
     db.flush()
+    return result
 
 
 def _refresh_personality_profiles(db: Session) -> None:

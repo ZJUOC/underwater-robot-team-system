@@ -3,6 +3,8 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Optional
+from zipfile import BadZipFile
+from xml.etree import ElementTree
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,9 +17,9 @@ from . import models, schemas
 from .auth import create_access_token, token_from_request, verify_password
 from .config import get_settings
 from .database import Base, SessionLocal, engine, get_db
-from .material_parser import MAX_IMAGE_FRAMES, MAX_PDF_PAGES, extract_material_text
+from .material_parser import MAX_IMAGE_FRAMES, MAX_PDF_PAGES, extract_material_text, extract_xlsx_records
 from .personality_engine import analyze_personality_signals
-from .seed import seed_demo
+from .seed import import_questionnaire_records, seed_demo
 from .services import analyze_interview, counts_by_status, review_evidence
 from .providers import get_ai_provider
 from .research import router as research_router
@@ -154,6 +156,29 @@ def create_application(payload: schemas.ApplicationCreate, db: Session = Depends
     db.refresh(archive)
     archive.member = member
     return application_summary(archive)
+
+
+@app.post("/api/applications/import", response_model=schemas.ApplicationImportResult, status_code=201)
+async def import_applications(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    filename = (file.filename or "纳新问卷.xlsx").replace("\\", "/").rsplit("/", 1)[-1][:240]
+    if not filename.lower().endswith(".xlsx"):
+        raise HTTPException(status_code=415, detail="请选择 XLSX 格式的纳新问卷")
+    content = await file.read(15 * 1024 * 1024 + 1)
+    if not content:
+        raise HTTPException(status_code=422, detail="上传的问卷为空")
+    if len(content) > 15 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="问卷文件不能超过 15 MB")
+    try:
+        records = await run_in_threadpool(extract_xlsx_records, content)
+        result = import_questionnaire_records(db, records, filename)
+    except (BadZipFile, ElementTree.ParseError, ValueError) as exc:
+        raise HTTPException(status_code=422, detail=f"无法导入问卷：{exc}") from exc
+    db.add(models.AuditLog(
+        actor="开发管理员", action="application.import", resource_type="application",
+        resource_id=filename, detail=result,
+    ))
+    db.commit()
+    return schemas.ApplicationImportResult(filename=filename, **result)
 
 
 @app.get("/api/applications/{application_id}", response_model=schemas.ApplicationDetail)

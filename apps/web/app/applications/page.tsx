@@ -12,6 +12,14 @@ import { EmptyState, ErrorState, LoadingState } from "../components/States";
 import { PersonalityTags } from "../components/PersonalityTags";
 
 type Modal = "create" | "assistant" | null;
+interface QuestionnaireImportResult {
+  filename: string;
+  total_rows: number;
+  created_archives: number;
+  merged_submissions: number;
+  unchanged_rows: number;
+  needs_review: number;
+}
 
 export default function ApplicationsPage() {
   const [rows, setRows] = useState<ApplicationSummary[]>([]);
@@ -23,6 +31,8 @@ export default function ApplicationsPage() {
   const [saving, setSaving] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [analysis, setAnalysis] = useState<MaterialAnalysis | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<QuestionnaireImportResult | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -87,14 +97,42 @@ export default function ApplicationsPage() {
     } finally { setSaving(false); }
   }
 
+  async function importQuestionnaire(file: File) {
+    setImporting(true);
+    setImportResult(null);
+    setError("");
+    const payload = new FormData();
+    payload.append("file", file);
+    try {
+      setImportResult(await apiForm<QuestionnaireImportResult>("/api/applications/import", payload));
+      load();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "问卷导入失败");
+    } finally { setImporting(false); }
+  }
+
   return <div className="page application-page">
     <div className="page-heading">
       <div><p className="eyebrow">Recruitment Archive</p><h1>纳新档案</h1><p>每位报名者一个档案，问卷、资料、面试和分析结果沿同一人员身份关联。</p></div>
       <div className="heading-actions">
+        <label className={`button secondary questionnaire-import ${importing ? "disabled" : ""}`} aria-disabled={importing}>
+          <UploadSimple size={16} /> {importing ? "正在导入…" : "导入 XLSX 问卷"}
+          <input type="file" accept=".xlsx" disabled={importing} onChange={(event) => {
+            const file = event.target.files?.[0];
+            event.target.value = "";
+            if (file) void importQuestionnaire(file);
+          }} />
+        </label>
         <button className="button secondary" type="button" onClick={() => setModal("create")}><Plus size={16} /> 新建档案</button>
         <button className="button primary" type="button" onClick={() => { setAnalysis(null); setFiles([]); setModal("assistant"); }}><Sparkle size={17} weight="fill" /> 资料分析助手</button>
       </div>
     </div>
+
+    {importResult && <div className="questionnaire-import-result" role="status">
+      <CheckCircle size={18} weight="fill" />
+      <span>已读取 {importResult.total_rows} 行：新建 {importResult.created_archives} 份档案，合并 {importResult.merged_submissions} 份重复提交，{importResult.unchanged_rows} 行已存在，{importResult.needs_review} 份待核对。</span>
+      <button type="button" onClick={() => setImportResult(null)} aria-label="关闭导入结果"><X size={15} /></button>
+    </div>}
 
     <section className="archive-summary" aria-label="纳新档案概况">
       <div><span>个人档案</span><strong>{rows.length}</strong><small>按身份去重后的档案</small></div>
