@@ -81,14 +81,14 @@ export default function ResearchQueuePage() {
 
   return <div className="page research-queue-page">
     <div className="page-heading">
-      <div><p className="eyebrow">Research Review</p><h1>调研审核</h1><p>三名候选人一组，在一周内完成水下机器人调研；团队成果与个人贡献分开评价。</p></div>
+      <div><p className="eyebrow">Interview Group Assignment</p><h1>面试小组作业</h1><p>三名候选人一组，在一周内完成水下机器人调研；团队成果与个人贡献分开评价。</p></div>
       <div className="heading-actions">
         <button className="button secondary" type="button" onClick={() => setDialog("task")}><CalendarBlank size={17} /> 新建任务</button>
         <button className="button primary" type="button" disabled={tasks.length === 0} onClick={() => { setSelectedMembers([]); setDialog("team"); }}><Plus size={17} /> 创建三人小队</button>
       </div>
     </div>
 
-    <section className="research-metrics" aria-label="调研审核概况">
+    <section className="research-metrics" aria-label="面试小组作业概况">
       <article><span>进行中小队</span><strong>{activeCount}</strong><small>从分组到最终决策</small><UsersThree size={22} /></article>
       <article><span>待人工复核</span><strong>{reviewCount}</strong><small>AI 只提供可追溯建议</small><Warning size={22} /></article>
       <article><span>已完成决策</span><strong>{teams.filter(team => team.status === "decided").length}</strong><small>逐人确认，不按团队一刀切</small><CheckCircle size={22} /></article>

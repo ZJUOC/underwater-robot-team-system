@@ -73,6 +73,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .nav-subitem { min-height: 32px; padding: 0 9px; border-radius: 6px; color: #8fa9ad; display: flex; align-items: center; gap: 9px; font-size: 12px; transition: background .18s ease, color .18s ease; }
 .nav-subitem:hover { background: rgba(255,255,255,.06); color: #fff; }
 .nav-subitem.active { background: rgba(225,242,239,.12); color: #e1f2ef; font-weight: 700; }
+.nav-subitem.disabled { opacity: .56; cursor: not-allowed; }
+.nav-subitem.disabled:hover { background: transparent; color: #8fa9ad; }
 .sidebar-footer { padding: 13px 10px 2px; border-top: 1px solid rgba(255,255,255,.1); display: flex; gap: 11px; color: #91aaae; }
 .workspace { margin-left: var(--sidebar-width); min-width: 0; }
 .topbar { position: sticky; top: 0; height: 62px; padding: 0 28px; background: rgba(251,253,253,.94); border-bottom: 1px solid var(--line); backdrop-filter: blur(12px); z-index: 10; display: flex; align-items: center; justify-content: space-between; }
@@ -355,6 +357,7 @@ kbd { border: 1px solid var(--line-strong); background: #fff; border-radius: 4px
 .archive-record:active { transform: translateY(1px); }
 .archive-record > div > strong, .archive-record > div > small { display: block; }
 .archive-record > div > small { margin-top: 4px; color: var(--muted); font-size: 11px; }
+.archive-commitment { display: flex !important; align-items: center; gap: 4px; color: #416b6c !important; }
 .archive-person { display: flex; align-items: center; gap: 11px; min-width: 0; }
 .archive-person strong, .archive-person small { display: block; }
 .archive-person small { margin-top: 3px; color: var(--muted); font: 11px ui-monospace, monospace; }
@@ -498,9 +501,9 @@ kbd { border: 1px solid var(--line-strong); background: #fff; border-radius: 4px
 @media (max-width: 760px) {
   :root { --sidebar-width: 0px; }
   .sidebar { position: fixed; top: auto; right: 0; width: 100%; height: 62px; padding: 6px 8px; flex-direction: row; z-index: 30; }
-  .brand, .nav-item.disabled, .sidebar-footer, .nav-parent { display: none; }
+  .brand, .nav-item.disabled, .nav-subitem.disabled, .sidebar-footer, .nav-parent { display: none; }
   .primary-nav { margin: 0; width: 100%; display: grid; grid-template-columns: repeat(5, 1fr); }
-  .recruitment-nav, .nav-subnav { display: contents; }
+  .nav-section, .nav-subnav { display: contents; }
   .nav-item, .nav-subitem { min-height: 49px; margin: 0 2px; padding: 4px; gap: 2px; flex-direction: column; justify-content: center; font-size: 9px; border: 0; }
   .workspace { margin-left: 0; padding-bottom: 66px; }
   .topbar { height: 54px; padding: 0 14px; }

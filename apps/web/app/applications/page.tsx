@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import {
-  ArrowRight, Brain, CheckCircle, File as FileIcon, Files, MagnifyingGlass,
+  ArrowRight, Brain, CheckCircle, Clock, File as FileIcon, Files, MagnifyingGlass,
   Plus, Sparkle, UploadSimple, Warning, X,
 } from "@phosphor-icons/react";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
@@ -155,7 +155,7 @@ export default function ApplicationsPage() {
       <div className="archive-directory-head"><span>报名者</span><span>专业与志愿</span><span>人格标签</span><span>资料状态</span><span className="sr-only">打开</span></div>
       {filtered.map((row) => <Link className="archive-record" href={`/applications/${row.id}`} key={row.id}>
         <div className="archive-person"><span className="member-avatar">{row.name.slice(0, 1)}</span><span><strong>{row.name}</strong><small>{row.student_id}</small></span></div>
-        <div><strong>{row.major || "专业待补充"}</strong><small>{row.desired_department || "志愿待确认"}</small></div>
+        <div><strong>{row.major || "专业待补充"}</strong><small>{row.desired_department || "志愿待确认"}</small><small className="archive-commitment"><Clock size={13} />每周投入：{row.available_time || "未填写"}</small></div>
         <PersonalityTags profile={row.personality_profile} empty="材料不足" />
         <div className="archive-state"><span className={`status-chip ${row.data_quality === "needs_review" ? "pending" : "active"}`}>{row.data_quality === "needs_review" ? "待核对" : row.data_quality === "demo" ? "演示档案" : "资料已归档"}</span><small>{row.submission_count} 份原始提交</small></div>
         <ArrowRight size={18} />

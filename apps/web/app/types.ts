@@ -58,6 +58,7 @@ export interface ApplicationSummary {
   source_type: string;
   source_name: string;
   submission_count: number;
+  available_time: string;
 }
 
 export interface MaterialAnalysis {
@@ -95,7 +96,6 @@ export interface ApplicationDetail extends ApplicationSummary {
   phone_masked: string;
   motivation: string;
   prior_experience: string;
-  available_time: string;
   raw_answers: { submissions?: Record<string, unknown>[]; quality_flags?: string[]; note?: string };
   tags: MemberTag[];
   evidence: Evidence[];
