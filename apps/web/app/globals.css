@@ -78,7 +78,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .nav-section.navigation-open > .nav-subnav { transform-origin: top; animation: nav-subnav-reveal .2s cubic-bezier(.2, .8, .2, 1) both; }
 }
 @keyframes nav-subnav-reveal {
-  from { opacity: 0; transform: translateY(-6px) scaleY(.96); }
+  from { opacity: .72; transform: translateY(-4px) scaleY(.98); }
   to { opacity: 1; transform: translateY(0) scaleY(1); }
 }
 .nav-subitem { min-height: 32px; padding: 0 9px; border-radius: 6px; color: #8fa9ad; display: flex; align-items: center; gap: 9px; font-size: 12px; transition: background .18s ease, color .18s ease; }
