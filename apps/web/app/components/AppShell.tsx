@@ -50,8 +50,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathSection: NavigationSection = pathname.startsWith("/members") ? "members"
     : pathname.startsWith("/training") ? "training"
       : pathname.startsWith("/setp") ? "setp" : "recruitment";
-  const [openSection, setOpenSection] = useState<NavigationSection>(pathSection);
-  const projectOpen = openSection === "setp" && pathname.startsWith("/setp/projects");
+  const [selectedSection, setSelectedSection] = useState<NavigationSection>(pathSection);
+  const [expandedSection, setExpandedSection] = useState<NavigationSection | null>(pathSection === "members" ? null : pathSection);
+  const projectOpen = expandedSection === "setp" && pathname.startsWith("/setp/projects");
   const [authReady, setAuthReady] = useState(false);
   const isPublicRoute = pathname === "/" || pathname === "/login";
   useEffect(() => {
@@ -59,7 +60,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     if (!window.localStorage.getItem("robot_team_token")) { router.replace("/login"); return; }
     setAuthReady(true);
   }, [isPublicRoute, router]);
-  useEffect(() => setOpenSection(pathSection), [pathSection]);
+  useEffect(() => {
+    setSelectedSection(pathSection);
+    setExpandedSection(pathSection === "members" ? null : pathSection);
+  }, [pathSection]);
   if (isPublicRoute) return <>{children}</>;
   if (!authReady) return <div className="auth-loading" aria-label="正在检查登录状态" />;
   function logout() {
@@ -67,43 +71,51 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     window.localStorage.removeItem("robot_team_user");
     router.replace("/login");
   }
+  function toggleSection(section: NavigationSection) {
+    setSelectedSection(section);
+    setExpandedSection(current => current === section ? null : section);
+  }
+  function activateSection(section: NavigationSection) {
+    setSelectedSection(section);
+    setExpandedSection(section === "members" ? null : section);
+  }
   return (
     <div className="app-shell">
-      <aside className={`sidebar ${openSection === "members" ? "single-row" : ""} ${projectOpen ? "has-third-row" : ""}`}>
+      <aside className={`sidebar ${expandedSection === null ? "single-row" : ""} ${projectOpen ? "has-third-row" : ""}`}>
         <div className="brand">
           <div className="brand-mark"><Anchor size={20} weight="bold" /></div>
           <div><strong>ROV TEAM</strong><span>成员协作系统</span></div>
         </div>
         <nav className="primary-nav" aria-label="主要导航">
-          <div className={`nav-section nav-recruitment ${openSection === "recruitment" ? "navigation-open" : ""}`}>
-            <button type="button" className={`nav-item nav-parent nav-parent-button ${openSection === "recruitment" ? "navigation-selected" : ""}`} onClick={() => setOpenSection("recruitment")} aria-expanded={openSection === "recruitment"}>
-              <ClipboardText size={18} weight={openSection === "recruitment" ? "fill" : "regular"} />
+          <div className={`nav-section nav-recruitment ${expandedSection === "recruitment" ? "navigation-open" : ""}`}>
+            <button type="button" className={`nav-item nav-parent nav-parent-button ${selectedSection === "recruitment" ? "navigation-selected" : ""}`} onClick={() => toggleSection("recruitment")} aria-expanded={expandedSection === "recruitment"}>
+              <ClipboardText size={18} weight={selectedSection === "recruitment" ? "fill" : "regular"} />
               <span>纳新管理</span>
             </button>
             <div className="nav-subnav">
               {recruitmentNav.map(({ href, label, icon: NavIcon }) => {
                 const active = pathname === href || pathname.startsWith(`${href}/`);
-                return <Link key={href} href={href} onClick={() => setOpenSection("recruitment")} className={active ? "nav-subitem active" : "nav-subitem"}>
+                return <Link key={href} href={href} onClick={() => activateSection("recruitment")} className={active ? "nav-subitem active" : "nav-subitem"}>
                   <NavIcon size={15} weight={active ? "fill" : "regular"} />
                   <span>{label}</span>
                 </Link>;
               })}
             </div>
           </div>
-          <Link href="/members" onClick={() => setOpenSection("members")} className={`nav-item nav-member ${openSection === "members" ? "navigation-selected" : ""}`}>
-            <IdentificationCard size={18} weight={openSection === "members" ? "fill" : "regular"} />
+          <Link href="/members" onClick={() => activateSection("members")} className={`nav-item nav-member ${selectedSection === "members" ? "navigation-selected" : ""}`}>
+            <IdentificationCard size={18} weight={selectedSection === "members" ? "fill" : "regular"} />
             <span>成员中心</span>
           </Link>
           {operationNav.map(({ key, label, icon: NavIcon, items }) => {
-            return <div className={`nav-section operations-nav nav-${key} ${openSection === key ? "navigation-open" : ""}`} key={label}>
-              <button type="button" className={`nav-item nav-parent nav-parent-button ${openSection === key ? "navigation-selected" : ""}`} onClick={() => setOpenSection(key)} aria-expanded={openSection === key}><NavIcon size={18} weight={openSection === key ? "fill" : "regular"} /><span>{label}</span></button>
+            return <div className={`nav-section operations-nav nav-${key} ${expandedSection === key ? "navigation-open" : ""}`} key={label}>
+              <button type="button" className={`nav-item nav-parent nav-parent-button ${selectedSection === key ? "navigation-selected" : ""}`} onClick={() => toggleSection(key)} aria-expanded={expandedSection === key}><NavIcon size={18} weight={selectedSection === key ? "fill" : "regular"} /><span>{label}</span></button>
               <div className="nav-subnav">
                 {items.map(item => {
                   const active = item.children ? pathname.startsWith("/setp/projects/") : pathname === item.href;
                   return <div className={`nav-subgroup ${item.children && projectOpen ? "navigation-open" : ""}`} key={item.href}>
-                    <Link href={item.href} onClick={() => setOpenSection(key)} className={active ? "nav-subitem active" : "nav-subitem"}><span>{item.label}</span></Link>
+                    <Link href={item.href} onClick={() => activateSection(key)} className={active ? "nav-subitem active" : "nav-subitem"}><span>{item.label}</span></Link>
                     {item.children && <div className="nav-thirdnav">{item.children.map(child =>
-                      <Link key={child.href} href={child.href} onClick={() => setOpenSection("setp")} className={pathname === child.href ? "nav-thirditem active" : "nav-thirditem"}>{child.label}</Link>
+                      <Link key={child.href} href={child.href} onClick={() => activateSection("setp")} className={pathname === child.href ? "nav-thirditem active" : "nav-thirditem"}>{child.label}</Link>
                     )}</div>}
                   </div>;
                 })}
