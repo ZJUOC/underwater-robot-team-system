@@ -1216,7 +1216,7 @@ kbd { border: 1px solid var(--line-strong); background: #fff; border-radius: 4px
 .app-shell .navigation-selected { box-shadow: inset 0 1px rgba(255,255,255,.7), 0 3px 12px rgba(0,0,0,.09); }
 
 @media (prefers-reduced-motion: no-preference) {
-  .app-shell :is(.page-heading, .profile-header, .applicant-header, .research-detail-header) h1 { transform-origin: left bottom; animation: admin-title-reveal .56s cubic-bezier(.16, 1, .3, 1) both; }
+  .app-shell :is(.page-heading, .profile-header, .applicant-header, .research-detail-header) h1 { transform-origin: left bottom; animation: admin-title-reveal .8s cubic-bezier(.16, 1, .3, 1) both; }
   .app-shell .page-heading .eyebrow { animation: admin-copy-reveal .4s cubic-bezier(.16, 1, .3, 1) both; }
   .app-shell .page-heading p:not(.eyebrow) { animation: admin-copy-reveal .48s .06s cubic-bezier(.16, 1, .3, 1) both; }
   .app-shell .page-heading > :is(.button, .heading-actions) { animation: admin-action-reveal .46s .1s cubic-bezier(.16, 1, .3, 1) both; }
