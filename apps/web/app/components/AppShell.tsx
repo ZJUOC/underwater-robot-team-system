@@ -90,7 +90,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               })}
             </div>
           </div>
-          <Link href="/members" onClick={() => setMobileSection("members")} className={`nav-item nav-member ${pathname === "/members" || pathname.startsWith("/members/") ? "active" : ""}`}>
+          <Link href="/members" onClick={() => setMobileSection("members")} className={`nav-item nav-member ${pathname === "/members" || pathname.startsWith("/members/") ? "active" : ""} ${mobileSection === "members" ? "mobile-selected" : ""}`}>
             <IdentificationCard size={18} weight={pathname.startsWith("/members") ? "fill" : "regular"} />
             <span>成员中心</span>
           </Link>

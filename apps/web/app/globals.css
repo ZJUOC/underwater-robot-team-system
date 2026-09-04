@@ -511,8 +511,8 @@ kbd { border: 1px solid var(--line-strong); background: #fff; border-radius: 4px
   .sidebar.has-third-row .primary-nav { grid-template-rows: repeat(3, 49px); }
   .nav-section { display: contents; }
   .nav-parent { display: flex; grid-row: 1; margin: 0 2px; padding: 4px; gap: 2px; flex-direction: column; justify-content: center; border-radius: 7px; font-size: 9px; text-align: center; }
-  .nav-parent.active { color: #acc0c3; background: transparent; font-weight: 400; }
-  .nav-parent.mobile-selected { color: #153b40; background: #e1f2ef; font-weight: 700; }
+  .nav-parent.active, .nav-member.active { color: #acc0c3; background: transparent; font-weight: 400; }
+  .nav-item.mobile-selected { color: #153b40; background: #e1f2ef; font-weight: 700; }
   .nav-recruitment .nav-parent { grid-column: 1; }
   .nav-member { grid-column: 2; grid-row: 1; }
   .nav-training .nav-parent { grid-column: 3; }
