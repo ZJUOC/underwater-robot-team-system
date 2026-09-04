@@ -75,7 +75,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .nav-subnav { display: none; margin: 0 0 10px 18px; padding: 3px 0 3px 12px; border-left: 1px solid rgba(225,242,239,.18); }
 .nav-section.navigation-open > .nav-subnav { display: block; }
 @media (prefers-reduced-motion: no-preference) {
-  .nav-section.navigation-open > .nav-subnav { transform-origin: top; animation: nav-subnav-reveal .2s cubic-bezier(.2, .8, .2, 1) both; }
+  .nav-section.navigation-open > .nav-subnav { transform-origin: top; animation: nav-subnav-reveal .5s cubic-bezier(.2, .8, .2, 1) both; }
 }
 @keyframes nav-subnav-reveal {
   from { opacity: .72; transform: translateY(-4px) scaleY(.98); }
